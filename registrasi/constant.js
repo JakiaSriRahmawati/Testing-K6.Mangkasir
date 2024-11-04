@@ -1,5 +1,7 @@
 import { check, sleep } from 'k6';
 import { registerUser } from '../helpers/user.js';
+import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
+
 
 export let options = {
     scenarios: {
@@ -28,10 +30,16 @@ export function userRegistration() {
     }
 
     executed[vuId] = true;  
-
-    const timestamp = Date.now();
-    const email = `tiaraalina_${timestamp}@example.com`; 
-    const res = registerUser("Tiara na", email, "ShhutygP@ssw0rd", "Owner", "Toko Dompet", "");
+    const uniqueId = uuidv4();
+    const registerRequest = {
+        fullName: "string",
+        email: `kasir_uuid_${uniqueId}@gmail.com`,
+        password: 'noekasep@123OK!!',
+        retryPassword: 'noekasep@123OK!!',
+        role: "Owner",
+        storeName: "string"
+    };
+    const res = registerUser(registerRequest);
 
     console.log('Response Body:', res.body);
 

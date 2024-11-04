@@ -9,6 +9,7 @@ export function registerUser(payload) {
   return http.post(url, JSON.stringify(payload), {
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json'
     },
   });
 }
