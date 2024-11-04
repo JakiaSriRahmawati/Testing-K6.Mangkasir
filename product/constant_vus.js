@@ -71,18 +71,27 @@ export function productCreate() {
 
 
     sleep(1);
+    let parentGuid = null;
     for (let i = 1; i <= 3; i++) {
-        let productGuid = uuidv4().replace(/-/g, '').slice(0, 16)
+        let productGuid = uuidv4().replace(/-/g, '').slice(0, 16);
+    
+        // Set parent GUID for second and third products
         const PRODUCT_PAYLOAD = {
             storeId: storeId,
             guid: productGuid,
-            name: `vu_id:_${vuId}_uniqueId:_${uniqueId}_user:_${data.user.id}`,
-            price:  2000 + (i * 2000),
-            cost:  1000 + (i * 2000),
+            name: `just -> vu_id:_${vuId}_uniqueId:_${uniqueId}_user:_${data.user.id}`,
+            price: 2000 + (i * 2000),
+            cost: 1000 + (i * 2000),
+            parent: i === 1 ? null : parentGuid,  // First product has no parent
             category: 1,
         };
     
         const productResponse = createProduct(PRODUCT_PAYLOAD, token);
+
+        if (i === 1 && productResponse.status === 200) {
+            parentGuid = productGuid;
+        }
+
         if (productResponse.status === 200) {
             productCounterSuccess.add(1);
         } else {
