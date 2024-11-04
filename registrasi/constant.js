@@ -9,7 +9,7 @@ export const options = {
         userRegistration: {
             exec: 'userRegistration',
             executor: 'constant-vus',
-            vus: 60,               
+            vus: 50,               
             duration: '1m',  
         },
     },
@@ -24,9 +24,10 @@ const registerCounterError = new Counter("user_registration_counter_error");
 
 export function userRegistration() {
     const uniqueId = uuidv4();
+    const vuId = __VU; 
     const registerRequest = {
         fullName: "string",
-        email: `_kasir_uuid_${uniqueId}@gmail.com`,
+        email: `vu_id${vuId}_${uniqueId}@gmail.com`,
         password: 'noekasep@123OK!!',
         retryPassword: 'noekasep@123OK!!',
         role: "Owner",
