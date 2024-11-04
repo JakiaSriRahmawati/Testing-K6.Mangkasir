@@ -71,20 +71,23 @@ export function productCreate() {
 
 
     sleep(1);
-    const PRODUCT_PAYLOAD = {
-        storeId: storeId,
-        guid: uniqueId.replace(/-/g, '').slice(0, 16),
-        name: `vu_id:_${vuId}_uniqueId:_${uniqueId}_user:_${data.user.id}`,
-        price: 10000,
-        cost: 5000,
-        category: 1,
-    };
-
-    const productResponse = createProduct(PRODUCT_PAYLOAD, token);
-    if (productResponse.status === 200) {
-        productCounterSuccess.add(1);
-    } else {
-        productCounterError.add(1);
+    for (let i = 1; i <= 3; i++) {
+        let productGuid = uuidv4().replace(/-/g, '').slice(0, 16)
+        const PRODUCT_PAYLOAD = {
+            storeId: storeId,
+            guid: productGuid,
+            name: `vu_id:_${vuId}_uniqueId:_${uniqueId}_user:_${data.user.id}`,
+            price:  2000 + (i * 2000),
+            cost:  1000 + (i * 2000),
+            category: 1,
+        };
+    
+        const productResponse = createProduct(PRODUCT_PAYLOAD, token);
+        if (productResponse.status === 200) {
+            productCounterSuccess.add(1);
+        } else {
+            productCounterError.add(1);
+        }
     }
 
     sleep(1);
