@@ -1,8 +1,6 @@
 import http from 'k6/http';
 import { check } from 'k6';
-
-
-const BASE_URL = 'https://devservice.mangkasir.com/service/v1';
+import { BASE_URL } from '../config.js'; 
 
 export function registerUser(payload) {
   const url = `${BASE_URL}/auth/register`;
@@ -24,11 +22,9 @@ export function loginUser(payload) {
 }
 
 export function getUserData(authToken) {
-    const url = 'https://devservice.mangkasir.com/service/v1/me'; // Pastikan endpoint ini benar
-
     console.log('Requesting user data with token:', authToken);
 
-    const res = http.get(url, {
+    const res = http.get(BASE_URL, {
         headers: { 'Authorization': `Bearer ${authToken}` },
     });
 

@@ -27,7 +27,7 @@ export function userRegistration() {
     const vuId = __VU; 
     const registerRequest = {
         fullName: "string",
-        email: `vu_id${vuId}_${uniqueId}@gmail.com`,
+        email: `vu_id_${vuId}_${uniqueId}@gmail.com`,
         password: 'noekasep@123OK!!',
         retryPassword: 'noekasep@123OK!!',
         role: "Owner",
