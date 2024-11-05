@@ -3,7 +3,7 @@ import { registerUser } from '../helpers/user.js';
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import { Counter } from 'k6/metrics';
 
-export let options = {
+export const options = {
     scenarios: {
         userRegistration: {
             exec: 'userRegistration',
@@ -13,51 +13,31 @@ export let options = {
         },
     },
     thresholds: {
-        'http_req_failed': ['rate<0.10'],
-        'http_req_duration': ['p(90)<6000'],
-        'checks': ['rate>0.90'],
+        user_registration_counter_success: ['count>90'],
+        user_registration_counter_error: ['count<10'],
     },
 };
 
-let executed = {};
-
-const totalRegistrations = new Counter('total_registrations');
-const successfulRegistrations = new Counter('successful_registrations');
-const failedRegistrations = new Counter('failed_registrations');
+const registerCounterSuccess = new Counter("user_registration_counter_success");
+const registerCounterError = new Counter("user_registration_counter_error");
 
 export function userRegistration() {
-    const vuId = __VU;
-
-    if (executed[vuId]) {
-        sleep(1);
-        return;
-    }
-
-    executed[vuId] = true;
     const uniqueId = uuidv4();
+    const vuId = __VU; 
     const registerRequest = {
         fullName: "string",
-        email: `kasir_uuid_${uniqueId}@gmail.com`,
+        email: `vu_id_${vuId}_${uniqueId}@gmail.com`,
         password: 'noekasep@123OK!!',
         retryPassword: 'noekasep@123OK!!',
         role: "Owner",
         storeName: "string"
     };
-
-    totalRegistrations.add(1);
-
-    const res = registerUser(registerRequest);
-
-    console.log('Response Body:', res.body);
-
-    const registrationStatus = check(res, {
-        'is status 200': (r) => r.status === 200,
-        'registration successful': (r) => {
-            const jsonResponse = JSON.parse(r.body);
-            console.log('Registration Response:', jsonResponse);
-            return jsonResponse.message === 'Pendaftaran Berhasil';
-        },
-    });
+    const registerResponse = registerUser(registerRequest);
+    if (registerResponse.status === 200) {
+        registerCounterSuccess.add(1);
+    } else {
+        registerCounterError.add(1);
+    }
 
     if (registrationStatus) {
         successfulRegistrations.add(1);

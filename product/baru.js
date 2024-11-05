@@ -8,7 +8,7 @@ export const options = {
     scenarios: {
         userRegistration: {
             exec: "userRegistration",
-            executor: "constant-vus",
+        executor: "constant-vus",
             vus: 10,
             duration: "30s",
         },
