@@ -1,18 +1,26 @@
 import http from 'k6/http';
-import { check, sleep } from 'k6';
+import { sleep } from 'k6';
+import { BASE_URL } from '../helpers/config.js';
+import { Counter } from 'k6/metrics';
 
 export const options = {
     scenarios: {
         ramping_arrival_rate_test: {
             executor: 'ramping-arrival-rate',
-            preAllocatedVUs: 500,  
+            preAllocatedVUs: 500,
             stages: [
                 { target: 100, duration: '30s' }, 
                 { target: 500, duration: '30s' },  
             ],
         },
     },
+    thresholds: {
+        'http_req_failed': ['rate<0.1'], 
+        'http_req_duration': ['p(95)<2000'], 
+    },
 };
+const successfulResponses = new Counter('successful_responses');
+const failedResponses = new Counter('failed_responses');
 
 export default function () {
     const params = {
@@ -23,15 +31,12 @@ export default function () {
         deleteFilter: 'withoutDeleted',
     };
 
-    const url = `https://devservice.mangkasir.com/service/v1/faqs/master?page=${params.page}&size=${params.size}&sort=${params.sort}&search=${params.search}&deleteFilter=${params.deleteFilter}`;
+    const url = `${BASE_URL}/faqs/master?page=${params.page}&size=${params.size}&sort=${params.sort}&search=${params.search}&deleteFilter=${params.deleteFilter}`;
     
     const response = http.get(url);
     
-    const success = check(response, {
-        'status is 200': (r) => r.status === 200,
-    });
-
-    if (success) {
+    if (response.status === 200) {
+        successfulResponses.add(1); 
         const jsonResponse = response.json();
         console.log('FAQs Master Response:');
 
@@ -45,6 +50,7 @@ export default function () {
             console.log('Tidak ada data yang ditemukan.');
         }
     } else {
+        failedResponses.add(1);
         console.error('Failed to fetch data:', response.status);
     }
 

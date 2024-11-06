@@ -1,4 +1,4 @@
-import { check, sleep } from 'k6';
+import { sleep } from 'k6';
 import { registerUser, loginUser } from '../helpers/user.js';
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import { Counter } from 'k6/metrics';
@@ -61,7 +61,6 @@ export function productCreate() {
     let data = loginResponse.json().data;
     let token = data.accessToken;
     let storeId = data.user.stores[0].id; 
-    // console.log(storeId)
 
     if (loginResponse.status === 200) {
         loginCounterSuccess.add(1);
@@ -75,14 +74,13 @@ export function productCreate() {
     for (let i = 1; i <= 3; i++) {
         let productGuid = uuidv4().replace(/-/g, '').slice(0, 16);
     
-        // Set parent GUID for second and third products
         const PRODUCT_PAYLOAD = {
             storeId: storeId,
             guid: productGuid,
             name: `just -> vu_id:_${vuId}_uniqueId:_${uniqueId}_user:_${data.user.id}`,
             price: 2000 + (i * 2000),
             cost: 1000 + (i * 2000),
-            parent: i === 1 ? null : parentGuid,  // First product has no parent
+            parent: i === 1 ? null : parentGuid, 
             category: 1,
         };
     

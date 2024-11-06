@@ -1,9 +1,8 @@
-import { check, sleep } from 'k6';
+import { sleep } from 'k6';
 import { registerUser } from '../helpers/user.js';
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
-import { Counter } from 'k6/metrics';
 
-export const options = {
+export let options = {
     scenarios: {
         userRegistration: {
             exec: 'userRegistration',
@@ -13,36 +12,39 @@ export const options = {
         },
     },
     thresholds: {
-        user_registration_counter_success: ['count>90'],
-        user_registration_counter_error: ['count<10'],
+        'http_req_failed': ['rate<0.10'], 
+        'http_req_duration': ['p(90)<6000'], 
+        'checks': ['rate>0.90'],  
     },
 };
 
-const registerCounterSuccess = new Counter("user_registration_counter_success");
-const registerCounterError = new Counter("user_registration_counter_error");
+let executed = {};  
 
 export function userRegistration() {
+    const vuId = __VU;
+
+    if (executed[vuId]) {
+        sleep(1);
+        return;
+    }
+
+    executed[vuId] = true;
     const uniqueId = uuidv4();
-    const vuId = __VU; 
     const registerRequest = {
         fullName: "string",
-        email: `vu_id_${vuId}_${uniqueId}@gmail.com`,
+        email: `guyu_uuid_${uniqueId}@gmail.com`,
         password: 'noekasep@123OK!!',
         retryPassword: 'noekasep@123OK!!',
         role: "Owner",
         storeName: "string"
     };
-    const registerResponse = registerUser(registerRequest);
-    if (registerResponse.status === 200) {
-        registerCounterSuccess.add(1);
-    } else {
-        registerCounterError.add(1);
-    }
 
-    if (registrationStatus) {
-        successfulRegistrations.add(1);
+    const res = registerUser(registerRequest);
+
+    if (res.status === 200) {
+        console.log('Registration successful');
     } else {
-        failedRegistrations.add(1);
+        console.error(`Registration failed with status ${res.status}`);
     }
 
     sleep(1);

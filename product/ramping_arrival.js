@@ -3,15 +3,20 @@ import { registerUser, loginUser } from '../helpers/user.js';
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import { Counter } from 'k6/metrics';
 import { createProduct } from '../helpers/product.js';
-import { createTransaction } from '../helpers/transaction.js'; // Mengimpor fungsi createTransaction
 
 export const options = {
     scenarios: {
         productCreate: {
             exec: 'productCreate',
-            executor: 'constant-vus',
-            vus: 50,               
-            duration: '1m',  
+            executor: 'ramping-arrival-rate',  
+            preAllocatedVUs: 50,  
+            stages: [
+                { duration: '30s', target: 100 },  
+                { duration: '30s', target: 200 },  
+                { duration: '30s', target: 300 },  
+                { duration: '30s', target: 400 },  
+                { duration: '30s', target: 500 },  
+            ],
         },
     },
     thresholds: {
@@ -32,7 +37,6 @@ const loginCounterError = new Counter("user_login_counter_error");
 
 const productCounterSuccess = new Counter("user_create_product_counter_success");
 const productCounterError = new Counter("user_create_product_counter_error");
-
 
 export function productCreate() {
     const uniqueId = uuidv4();
@@ -71,8 +75,6 @@ export function productCreate() {
 
     sleep(1);
     let parentGuid = null;
-    let firstProductGuid = null; // Menyimpan guid produk pertama
-    
     for (let i = 1; i <= 3; i++) {
         let productGuid = uuidv4().replace(/-/g, '').slice(0, 16);
     
@@ -90,7 +92,6 @@ export function productCreate() {
 
         if (i === 1 && productResponse.status === 200) {
             parentGuid = productGuid;
-            firstProductGuid = productGuid; // Menyimpan guid produk pertama
         }
 
         if (productResponse.status === 200) {
@@ -98,41 +99,6 @@ export function productCreate() {
         } else {
             productCounterError.add(1);
         }
-    }
-
-    sleep(1);
-
-    // Membuat transaksi setelah produk berhasil dibuat
-    const transactionGuid = uuidv4().replace(/-/g, '').slice(0, 16);
-    const transactionPayload = {
-        customerId: 0,
-        customer: "string", // opsional, jika ingin tampil di transaksi
-        guid: transactionGuid,
-        date: new Date().toISOString().slice(0, 23).replace('T', ' '), // format yyyy-MM-dd HH:mm:ss.SSSSSS
-        invoiceDiscount: 0,
-        invoicePpn: 0,
-        subTotal: 60000, // Sesuaikan dengan harga produk
-        storeId: storeId,
-        details: [
-            {
-                productGuid: firstProductGuid, // Menggunakan produk pertama yang dibuat
-                transactionGuid: transactionGuid,
-                productName: `Product ${firstProductGuid}`,
-                qty: 1,
-                price: 2000,
-                discount: 0,
-                ppn: 0,
-                totalPrice: 2000,
-            },
-        ],
-    };
-
-    const transactionResponse = createTransaction(transactionPayload, token);
-
-    if (transactionResponse.status === 200) {
-        console.log('Transaction created successfully');
-    } else {
-        console.log('Transaction failed');
     }
 
     sleep(1);

@@ -1,6 +1,6 @@
 import http from 'k6/http';
 
-import { BASE_URL } from '../config.js'; 
+import { BASE_URL } from './config.js'; 
 
 export function createProduct(payload, token) {
     const url = `${BASE_URL}/products/store`;

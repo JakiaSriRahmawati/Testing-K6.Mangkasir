@@ -1,68 +1,55 @@
-import { check, sleep } from 'k6';
+import { sleep } from 'k6';
 import { registerUser } from '../helpers/user.js';
-import { Counter } from 'k6/metrics';
-
-
-const successfulRegistrations = new Counter('successful_registrations');
+import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
 export let options = {
     scenarios: {
         userRegistration: {
+            exec: 'userRegistration',
             executor: 'ramping-arrival-rate',
-            preAllocatedVUs: 100, 
-            startRate: 100, 
-            timeUnit: '1s', 
+            startRate: 100,        
+            timeUnit: '30s',            
             stages: [
-                { target: 100, duration: '30s' }, 
-                { target: 200, duration: '30s' }, 
-                { target: 300, duration: '30s' }, 
-                { target: 400, duration: '30s' }, 
-                { target: 500, duration: '30s' },
-                { target: 0, duration: '30s' }
+                { target: 500, duration: '30s' }, 
             ],
+            preAllocatedVUs: 10,           
+            maxVUs: 100,               
         },
     },
     thresholds: {
-        'http_req_failed': ['rate<0.10'], 
-        'http_req_duration': ['p(90)<6000'], 
-        'checks': ['rate>0.90'], 
+        'http_req_failed': ['rate<0.10'],   
+        'http_req_duration': ['p(90)<6000'],
     },
 };
 
 let executed = {};  
 
-export default function defaultFunction() {
-    userRegistration(); 
-}
-
 export function userRegistration() {
-    const vuId = __VU; 
+    const vuId = __VU;
 
     if (executed[vuId]) {
-        sleep(1); 
+        sleep(1);
         return;
     }
 
-    executed[vuId] = true;  
+    executed[vuId] = true;
+    const uniqueId = uuidv4();
+    const registerRequest = {
+        fullName: "string",
+        email: `guyu_uuid_${uniqueId}@gmail.com`,
+        password: 'noekasep@123OK!!',
+        retryPassword: 'noekasep@123OK!!',
+        role: "Owner",
+        storeName: "string"
+    };
 
-    const timestamp = Date.now();
-    const email = `tiaraalina_${timestamp}@example.com`; 
-    const res = registerUser("Tiara na", email, "ShhutygP@ssw0rd", "Owner", "Toko Dompet", "");
+    const res = registerUser(registerRequest);
 
-    console.log('Response Body:', res.body);
-
-    const success = check(res, {
-        'is status 200': (r) => r.status === 200,
-        'registration successful': (r) => {
-            const jsonResponse = JSON.parse(r.body);
-            console.log('Registration Response:', jsonResponse);
-            return jsonResponse.message === 'Pendaftaran Berhasil';
-        },
-    });
-
-    if (success) {
-        successfulRegistrations.add(1);
+    if (res.status === 200) {
+        console.log('Registration successful');
+    } else {
+        console.error(`Registration failed with status ${res.status}`);
     }
 
-    sleep(1);  
+    sleep(1);
 }

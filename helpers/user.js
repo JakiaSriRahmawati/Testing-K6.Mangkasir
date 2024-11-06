@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check } from 'k6';
-import { BASE_URL } from '../config.js'; 
+import { BASE_URL } from './config.js'; 
 
 export function registerUser(payload) {
   const url = `${BASE_URL}/auth/register`;

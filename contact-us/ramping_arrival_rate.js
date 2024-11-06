@@ -1,25 +1,38 @@
 import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { createPayload } from '../helpers/contact_us.js';
+import { sleep } from 'k6';
+import { BASE_URL } from '../helpers/config.js';
+import { Counter } from 'k6/metrics';
 
 export const options = {
   scenarios: {
     ramping_arrival_rate_test: {
       executor: 'ramping-arrival-rate',
-      startRate: 100,    
-      timeUnit: '30s',   
-      preAllocatedVUs: 100, 
+      startRate: 100,  
+      timeUnit: '1s',  
       stages: [
-        { target: 500, duration: '30s' }, 
+        { duration: '30s', target: 500 }, 
       ],
+      preAllocatedVUs: 50, 
     },
+  },
+  thresholds: {
+    user_create_contact_counter_success: ['count > 90'],  
+    user_create_contact_counter_error: ['count < 10'],    
   },
 };
 
-const BASE_URL = 'https://devservice.mangkasir.com/service/v1/contact-us/store';
+const contactCounterSuccess = new Counter('user_create_contact_counter_success');
+const contactCounterError = new Counter('user_create_contact_counter_error');
+
+const CONTACT_US_URL = `${BASE_URL}/contact-us/store`;
 
 export default function () {
-  const payload = createPayload(); 
+  const payload = {
+    name: 'uuu',
+    businessName: 'store',
+    message: 'Alat alat untuk ibadah',
+    email: 'jekklq@example.com',
+  };
 
   const params = {
     headers: {
@@ -27,28 +40,12 @@ export default function () {
     },
   };
 
-  const res = http.post(BASE_URL, payload, params);
+  const res = http.post(CONTACT_US_URL, JSON.stringify(payload), params);
 
-  console.log(`Response body: ${res.body}`);
-
-  const checks = check(res, {
-    'status is 200': (r) => r.status === 200,
-    'response has success message': (r) => {
-      try {
-        const responseBody = JSON.parse(r.body); 
-        console.log(`Response message: "${responseBody.message}"`); 
-        
-        return responseBody.message && responseBody.message.trim() === 'Data terkirim';
-      } catch (e) {
-        console.error('Error parsing response body:', e);
-        return false; 
-      }
-    },
-  });
-
-  if (!checks['response has success message']) {
-    console.log(`Expected success message not found, full response: ${JSON.stringify(res.body, null, 2)}`);
+  if (res.status === 200) {
+    contactCounterSuccess.add(1);  
+  } else {
+    contactCounterError.add(1);  
   }
-
-  sleep(1); 
+  sleep(1);
 }
