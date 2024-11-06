@@ -28,17 +28,19 @@ export function getUserData(authToken) {
         headers: { 'Authorization': `Bearer ${authToken}` },
     });
 
-    console.log('Get User Data Response Status:', res.status);
-    console.log('Get User Data Response Body:', res.body);
+    return res;
 
-    check(res, {
-        'status is 200': (r) => r.status === 200,
-    });
+    // console.log('Get User Data Response Status:', res.status);
+    // console.log('Get User Data Response Body:', res.body);
 
-    try {
-        return res.json(); 
-    } catch (e) {
-        console.error('Error parsing user data response:', e);
-        return {}; 
-    }
+    // check(res, {
+    //     'status is 200': (r) => r.status === 200,
+    // });
+
+    // try {
+    //     return res.json(); 
+    // } catch (e) {
+    //     console.error('Error parsing user data response:', e);
+    //     return {}; 
+    // }
 }

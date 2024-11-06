@@ -8,8 +8,8 @@ export let options = {
     scenarios: {
         userRegistration: {
             executor: 'constant-vus',
-            vus: 50,
-            duration: '1m',
+            vus: 10,
+            duration: '20s',
         },
     },
     thresholds: {
@@ -30,11 +30,18 @@ const getUserDataSuccess = new Counter('get_user_data_success');
 const getUserDataFail = new Counter('get_user_data_fail');
 
 export default function () {
-    const uuid = uuidv4(); 
-    const email = `dwi_${uuid}@example.com`;  
-    const password = "Test@1234";
+    const uniqueId = uuidv4();
+    const vuId = __VU; 
+    const registerRequest = {
+        fullName: "string",
+        email: `vu_id_${vuId}_${uniqueId}@hotmail.com`,
+        password: 'noekasep@123OK!!',
+        retryPassword: 'noekasep@123OK!!',
+        role: "Owner",
+        storeName: "string"
+    };
 
-    const registerRes = registerUser(`${BASE_URL}/auth/register`, "dwi", email, password, "Owner", "Toko botol", "");
+    const registerRes = registerUser(registerRequest);
     if (registerRes.status === 200) {
         registerCounterSuccess.add(1); 
     } else {
@@ -44,9 +51,11 @@ export default function () {
     }
     sleep(1);
 
-    const loginRes = loginUser(`${BASE_URL}/auth/login`, email, password);
-
-    if (loginRes.status === 200) {
+    const loginResponse = loginUser({
+        email: registerRequest.email,
+        password: registerRequest.password,
+    });
+    if (loginResponse.status === 200) {
         loginCounterSuccess.add(1);
     } else {
         loginCounterError.add(1);
@@ -54,17 +63,22 @@ export default function () {
         // return; 
     }
 
-    const token = loginRes.json('data.accessToken');
+    let data = loginResponse.json().data;
+    let token = data.accessToken;
+
+    console.log(token);
+
     // console.log(`Menggunakan token untuk ${email}: ${token}`);
 
     const userDataRes = getUserData(`${BASE_URL}/me`, token);
+    console.log(userDataRes)
 
     if (userDataRes.status === 200) {
         getUserDataSuccess.add(1);
-        console.log('User Data:', userDataRes.json());
+        // console.log('User Data:', userDataRes.json());
     } else {
         getUserDataFail.add(1); 
-        console.error(`Get user data failed for ${email}: `, userDataRes.status, userDataRes.body);
+        // console.error(`Get user data failed for ${email}: `, userDataRes.status, userDataRes.body);
     }
 
     sleep(1); 
