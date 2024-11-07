@@ -3,7 +3,7 @@ import { check } from 'k6';
 import { BASE_URL } from './config.js'; 
 
 export function createTransaction(transactionPayload, token) {
-    const url = `${BASE_URL}/service/v1/transactions`; 
+    const url = `${BASE_URL}/transactions`; 
     const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',

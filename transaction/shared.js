@@ -9,9 +9,10 @@ export const options = {
     scenarios: {
         productCreate: {
             exec: 'productCreate',
-            executor: 'constant-vus',
+            executor: 'shared-iterations', 
             vus: 10,               
-            duration: '10s',  
+            iterations: 300,       
+            maxDuration: '1m',  
         },
     },
     thresholds: {
@@ -33,12 +34,11 @@ const loginCounterError = new Counter("user_login_counter_error");
 const productCounterSuccess = new Counter("user_create_product_counter_success");
 const productCounterError = new Counter("user_create_product_counter_error");
 
-
 export function productCreate() {
     const uniqueId = uuidv4();
     const vuId = __VU; 
     const registerRequest = {
-        fullName: "jkjkjk",
+        fullName: "jyye",
         email: `vu_id_${vuId}_${uniqueId}@hotmail.com`,
         password: 'noekasep@123OK!!',
         retryPassword: 'noekasep@123OK!!',

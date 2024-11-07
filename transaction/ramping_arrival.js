@@ -9,9 +9,18 @@ export const options = {
     scenarios: {
         productCreate: {
             exec: 'productCreate',
-            executor: 'constant-vus',
-            vus: 10,               
-            duration: '10s',  
+            executor: 'ramping-arrival-rate',
+            startRate: 100, 
+            timeUnit: '30s', 
+            stages: [
+                { target: 100, duration: '30s' }, 
+                { target: 200, duration: '30s' }, 
+                { target: 300, duration: '30s' }, 
+                { target: 400, duration: '30s' }, 
+                { target: 500, duration: '30s' }, 
+            ],
+            preAllocatedVUs: 50,
+            maxVUs: 500, 
         },
     },
     thresholds: {
@@ -33,12 +42,11 @@ const loginCounterError = new Counter("user_login_counter_error");
 const productCounterSuccess = new Counter("user_create_product_counter_success");
 const productCounterError = new Counter("user_create_product_counter_error");
 
-
 export function productCreate() {
     const uniqueId = uuidv4();
     const vuId = __VU; 
     const registerRequest = {
-        fullName: "jkjkjk",
+        fullName: "string",
         email: `vu_id_${vuId}_${uniqueId}@hotmail.com`,
         password: 'noekasep@123OK!!',
         retryPassword: 'noekasep@123OK!!',

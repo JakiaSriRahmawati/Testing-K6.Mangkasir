@@ -21,10 +21,10 @@ export function loginUser(payload) {
   });
 }
 
-export function getUserData(authToken) {
+export function getUserData(url, authToken) {
     console.log('Requesting user data with token:', authToken);
 
-    const res = http.get(BASE_URL, {
+    const res = http.get(url, {
         headers: { 'Authorization': `Bearer ${authToken}` },
     });
 

@@ -1,67 +1,80 @@
-import { sleep, Counter } from 'k6';
+import { sleep } from 'k6';
+import { Counter } from 'k6/metrics';
 import { registerUser, loginUser, getUserData } from '../helpers/user.js';
-
-const successfulRegistrations = new Counter('successful_registrations');
-const failedRegistrations = new Counter('failed_registrations');
-const successfulLogins = new Counter('successful_logins');
-const failedLogins = new Counter('failed_logins');
-const successfulUserDataFetches = new Counter('successful_user_data_fetches');
-const failedUserDataFetches = new Counter('failed_user_data_fetches');
+import { BASE_URL } from '../helpers/config.js';
+import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
 export let options = {
     scenarios: {
         userRegistration: {
             executor: 'ramping-vus',
-            startVUs: 10,
+            startVUs: 1,
             stages: [
-                { target: 50, duration: '30s' },
+                { duration: '10s', target: 10 },  
+                { duration: '30s', target: 50 },  
             ],
+            gracefulRampDown: '0s',  
         },
     },
     thresholds: {
-        'http_req_failed': ['rate<0.10'],
-        'http_req_duration': ['p(90)<6000'],
-        'successful_registrations': ['count>0'],
-        'failed_registrations': ['count<10'],
-        'successful_logins': ['count>0'],
-        'failed_logins': ['count<10'],
-        'successful_user_data_fetches': ['count>0'],
-        'failed_user_data_fetches': ['count<10'],
+        user_registration_counter_success: ['count>200'],
+        user_registration_counter_error: ['count<10'],
+        user_login_counter_success: ['count>200'],
+        user_login_counter_error: ['count<10'],
+        get_user_data_success: ['count>90'],
+        get_user_data_fail: ['count<10'],
     },
 };
 
-export default function () {
-    const timestamp = Date.now();
-    const email = `ramzi_${timestamp}@example.com`;
-    const password = "Test@1234";
+const registerCounterSuccess = new Counter("user_registration_counter_success");
+const registerCounterError = new Counter("user_registration_counter_error");
+const loginCounterSuccess = new Counter("user_login_counter_success");
+const loginCounterError = new Counter("user_login_counter_error");
+const getUserDataSuccess = new Counter('get_user_data_success');
+const getUserDataFail = new Counter('get_user_data_fail');
 
-    const registerRes = registerUser("ramzi", email, password, "Owner", "Toko botol", "");
+export default function () {
+    const uniqueId = uuidv4();
+    const vuId = __VU;
+    const registerRequest = {
+        fullName: "string",
+        email: `vu_id_${vuId}_${uniqueId}@hotmail.com`,
+        password: 'noekasep@123OK!!',
+        retryPassword: 'noekasep@123OK!!',
+        role: "Owner",
+        storeName: "string"
+    };
+
+    const registerRes = registerUser(registerRequest);
     if (registerRes.status === 200) {
-        successfulRegistrations.add(1);
+        registerCounterSuccess.add(1);
     } else {
-        failedRegistrations.add(1);
-        console.error(`Registration failed for ${email}: `, registerRes.status, registerRes.body);
+        registerCounterError.add(1);
+    }
+    sleep(1);
+
+    const loginResponse = loginUser({
+        email: registerRequest.email,
+        password: registerRequest.password,
+    });
+    if (loginResponse.status === 200) {
+        loginCounterSuccess.add(1);
+    } else {
+        loginCounterError.add(1);
     }
 
-    if (registerRes.status === 200) {
-        const loginRes = loginUser(email, password);
-        if (loginRes.status === 200) {
-            successfulLogins.add(1);
-            const token = loginRes.json('data.accessToken');
-            console.log(`Menggunakan token untuk ${email}: ${token}`);
+    let data = loginResponse.json().data;
+    let token = data.accessToken;
 
-            const userDataRes = getUserData(token);
-            if (userDataRes.status === 200) {
-                successfulUserDataFetches.add(1);
-                console.log('User Data:', userDataRes.json());
-            } else {
-                failedUserDataFetches.add(1);
-                console.error(`Get user data failed for ${email}: `, userDataRes.status, userDataRes.body);
-            }
-        } else {
-            failedLogins.add(1);
-            console.error(`Login failed for ${email}: `, loginRes.status, loginRes.body);
-        }
+    console.log(token);
+
+    const userDataRes = getUserData(`${BASE_URL}/me`, token);
+    console.log(userDataRes);
+
+    if (userDataRes.status === 200) {
+        getUserDataSuccess.add(1);
+    } else {
+        getUserDataFail.add(1);
     }
 
     sleep(1);
